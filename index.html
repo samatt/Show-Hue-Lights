@@ -206,8 +206,10 @@
 		if (thisClass.trim() === 'lights'){
 			console.log("LIGHTS");	
 			setLight(thisGroup, payload);
+		url = "http://128.122.151.166"+ '/api/thomaspatrickigoe/lights/';
 		}
 		else{
+			url = "http://128.122.151.166"+ '/api/thomaspatrickigoe/groups/';
 			setGroup(thisGroup, payload);						// make the HTTP call	
 		}
 		
