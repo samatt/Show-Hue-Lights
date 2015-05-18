@@ -38,9 +38,9 @@
 		to get the light data
 	*/
 	function connect() {
-		url = "http://128.122.151.166"+ '/api/thomaspatrickigoe/groups';
+		url = "http://128.122.151.166"+ '/api/thomaspatrickigoe/groups/';
 		httpGet( url, getGroups);
-		url = "http://128.122.151.166"+ '/api/thomaspatrickigoe/lights';
+		url = "http://128.122.151.166"+ '/api/thomaspatrickigoe/lights/';
 		httpGet(url, getLights);
 	}
 	// url = "http:/128.122.151.166/api/thomaspatrickigoe/groups" + userName.elt.value + '/lights/';
@@ -53,7 +53,8 @@
 	 	console.log(groups);
 		for (g in groups) {						// iterate over each light in the response
 			var groupsDiv = createDiv();		// create a DIV
-			groupsDiv.id(g);						// name it
+			groupsDiv.id(g);
+			groupsDiv.class("group");						// name it
 			groupsDiv.position(10, groupHeight);	// position it
 			groupsDiv.html(groups[g].name);	// set the HTML in it
 			groupHeight += 160;							// increment height for the next div
@@ -69,11 +70,12 @@
 		for (l in lights) {						// iterate over each light in the response
 			var lightsDiv = createDiv();		// create a DIV
 			lightsDiv.id(l);						// name it
+			lightsDiv.class("lights");
 			lightsDiv.position(300, lightHeight);	// position it
 			lightsDiv.html(lights[l].name);	// set the HTML in it
 			lightHeight += 160;							// increment height for the next div
 
-			console.log(lights[l].action)
+			console.log(lights[l].state)
 			createControl(lights[l], lightsDiv);	// create the controls inside it
 		}
 	}
@@ -189,9 +191,10 @@
 	*/
 
 
-	function changeGroupProperty() {
+	function changeGroupProperty(event) {
 		var thisControl = event.target.id;				// what did you click on?
 		var thisGroup = event.target.parentNode.id;	// get the parent, for the light number
+		var thisClass = event.target.parentNode.className;
 		var value = event.target.value;					// get the value
 		if (thisControl === 'on') {						// 'on' is a special case
 			value = event.target.checked;					// because of the checkbox
@@ -199,7 +202,15 @@
 		// assemble the name and the value into a JSON string:
 		var JsonString = '{\"' + thisControl + '\":' + value + '}';
 		var payload = JSON.parse(JsonString);			// convert string to JSON object
-		setGroup(thisGroup, payload)						// make the HTTP call
+		
+		if (thisClass.trim() === 'lights'){
+			console.log("LIGHTS");	
+			setLight(thisGroup, payload);
+		}
+		else{
+			setGroup(thisGroup, payload);						// make the HTTP call	
+		}
+		
 	}
 
 	function setGroup(groupID,data){
@@ -219,6 +230,31 @@
 
 				println(response);		// server (hub) response
 				getGroups();				// refresh the lights from the hub
+			});
+	}
+
+	function setLight(lightNumber, data) {
+		var path = url + lightNumber + '/state';		// assemble the full URL
+		var content = JSON.stringify(data);				// convert JSON obj to string
+		
+		// HttpDo seems to have a bug in it when it comes to PUT, so I've
+		// used jQuery instead here.
+		
+		/*
+		httpDo( path, "PUT", content, 'json', function(response) {
+			println(response);
+			getLights();	
+		});
+		*/
+			
+		var request = $.ajax({
+			type: "PUT",					// use the PUT method
+			url: path,						// URL to call
+			data: content,					// body of the request
+			dataType: 'text/json'		// data type of the body
+			}, function(response) {		// callback function
+				println(response);		// server (hub) response
+				getLights();				// refresh the lights from the hub
 			});
 	}
 
